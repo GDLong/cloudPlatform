@@ -1,7 +1,145 @@
+@back: '@/assets/animate-bg.png';
+@sprite: '@/assets/animate-spring.png';
+
 .trigger {
   background: 'red';
   :global(.ant-btn) {
     margin-right: 8px;
     margin-bottom: 12px;
+  }
+}
+.welcome {
+  .welTitle {
+    color: #656d75;
+    font-size: 30px;
+    text-align: left;
+    text-indent: 3em;
+    animation-duration: 2s;
+    animation-fill-mode: both;
+    animation-name: fadeInDown;
+  }
+  .animated {
+    position: relative;
+    background: url('@{back}') no-repeat center;
+    background-size: contain;
+    width: 750px;
+    height: 500px;
+    margin: 0 auto;
+    overflow: hidden;
+  }
+  .cloudGroup {
+    .cloud {
+      position: absolute;
+      width: 50px;
+      height: 23px;
+      background-image: url('@{sprite}');
+      background-position: -145px -210px;
+      background-repeat: no-repeat;
+    }
+    .cloud_1 {
+      top: 5px;
+      animation: key_cloud 100s linear infinite;
+      -webkit-animation: key_cloud 100s linear infinite; /* Safari 和 Chrome */
+    }
+    // .cloud_2{
+    //   left: 200px;
+    //   top: 60px;
+    //   animation:key_car2 100 linear infinite;
+    //   -webkit-animation:key_car2 100 linear infinite; /* Safari 和 Chrome */
+    //   animation-delay:20s;
+    //   -webkit-animation-delay:20s; /* Safari 和 Chrome */
+    // }
+  }
+  .carGroup {
+    .car {
+      position: absolute;
+      background-image: url('@{sprite}');
+    }
+    .car_1 {
+      left: -135px;
+      bottom: 140px;
+      width: 135px;
+      height: 60px;
+      background-position: 0px 0px;
+      background-repeat: no-repeat;
+      background-size: 250px auto;
+      animation: key_car2 20s linear infinite;
+      -webkit-animation: key_car2 20s linear infinite; /* Safari 和 Chrome */
+      animation-delay: 5s;
+      -webkit-animation-delay: 5s; /* Safari 和 Chrome */
+    }
+    .car_2 {
+      left: -118px;
+      bottom: 145px;
+      width: 118px;
+      height: 47px;
+      background-position: -135px 0px;
+      background-repeat: no-repeat;
+      background-size: 250px auto;
+      animation: key_car2 18s ease-in-out infinite;
+      -webkit-animation: key_car2 18s ease-in-out infinite; /* Safari 和 Chrome */
+    }
+    .car_3 {
+      right: -118px;
+      bottom: 35px;
+      width: 118px;
+      height: 82px;
+      background-position: -135px -51px;
+      background-repeat: no-repeat;
+      background-size: 250px auto;
+      animation: key_car3 20s linear infinite;
+      -webkit-animation: key_car3 20s linear infinite; /* Safari 和 Chrome */
+      animation-delay: 10s;
+      -webkit-animation-delay: 10s; /* Safari 和 Chrome */
+    }
+    .car_4 {
+      right: -118px;
+      bottom: 35px;
+      width: 118px;
+      height: 82px;
+      background-position: -135px -51px;
+      background-repeat: no-repeat;
+      background-size: 250px auto;
+      animation: key_car3 20s linear infinite;
+      -webkit-animation: key_car3 20s linear infinite; /* Safari 和 Chrome */
+    }
+  }
+}
+@keyframes fadeInDown {
+  0% {
+    opacity: 0;
+    transform: translate3d(0, -100%, 0);
+  }
+
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+@keyframes key_car3 {
+  0% {
+    right: -120px;
+  }
+
+  to {
+    right: 100%;
+  }
+}
+@keyframes key_cloud {
+  0% {
+    right: -50px;
+  }
+
+  to {
+    right: 100%;
+  }
+}
+@keyframes key_car2 {
+  0% {
+    left: -150px;
+  }
+
+  to {
+    left: 100%;
   }
 }

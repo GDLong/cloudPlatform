@@ -1,6 +1,5 @@
 import React, { PureComponent, Fragment } from 'react';
 import { connect } from 'dva';
-import moment from 'moment';
 import {
   Row,
   Col,
@@ -8,21 +7,15 @@ import {
   Form,
   Input,
   Select,
-  Icon,
   Button,
-  Dropdown,
-  Menu,
-  InputNumber,
+  Table,
   DatePicker,
   Modal,
   message,
-  Badge,
   Divider,
-  Steps,
-  Radio,
   Popconfirm,
 } from 'antd';
-import StandardTable from '@/components/StandardTable';
+import { getAccess } from '@/utils/accessFunctions';
 import PageHeaderWrapper from '@/components/PageHeaderWrapper';
 import CreateForm from './CreateModel';
 import EditorModel from './EditorModel';
@@ -31,26 +24,19 @@ import DetailModel from './DetailModel';
 import styles from './EquiList.less';
 
 const FormItem = Form.Item;
-const { Step } = Steps;
-const { TextArea } = Input;
 const { Option } = Select;
-const RadioGroup = Radio.Group;
 const { RangePicker } = DatePicker;
-const getValue = obj =>
-  Object.keys(obj)
-    .map(key => obj[key])
-    .join(',');
-const statusMap = ['error', 'success'];
-const status = ['关闭', '运行中'];
 
 /* eslint react/no-multi-comp:0 */
-@connect(({ loading, bms }) => ({
+@connect(({ loading, bms, menuTree }) => ({
   bms,
   loading: loading.models.bms,
+  menuTree: menuTree.menuData,
 }))
 @Form.create()
 class TableList extends PureComponent {
   state = {
+    access: {},
     modalVisible: false,
     updateModalVisible: false,
     detailModalVisible: false,
@@ -90,27 +76,57 @@ class TableList extends PureComponent {
       title: '操作',
       render: (text, record) => (
         <Fragment>
-          <a onClick={() => this.handleUpdateModalVisible(true, record)}>编辑</a>
-          <Divider type="vertical" />
-          <a onClick={() => this.handleDetailModalVisible(true, record)}>查看</a>
-          <Divider type="vertical" />
-          <a onClick={() => this.handleUpgradeModalVisible(true, record)}>升级</a>
-          <Divider type="vertical" />
-          <Popconfirm
-            title="确定删除该选项么?"
-            onConfirm={() => this.popConfirm(record)}
-            onCancel={() => {}}
-            okText="Yes"
-            cancelText="No"
-          >
-            <a>删除</a>
-          </Popconfirm>
+          {this.state.access &&
+          Object.keys(this.state.access).length &&
+          this.state.access.hasOwnProperty('updateDevice') ? (
+            <Fragment>
+              <a onClick={() => this.handleUpdateModalVisible(true, record)}>
+                {this.state.access.updateDevice.name}
+              </a>
+              <Divider type="vertical" />
+            </Fragment>
+          ) : null}
+          {this.state.access &&
+          Object.keys(this.state.access).length &&
+          this.state.access.hasOwnProperty('getDeviceDetailInfo') ? (
+            <Fragment>
+              <a onClick={() => this.handleDetailModalVisible(true, record)}>
+                {this.state.access.getDeviceDetailInfo.name}
+              </a>
+              <Divider type="vertical" />
+            </Fragment>
+          ) : null}
+          {/* <a onClick={() => this.handleUpgradeModalVisible(true, record)}>升级</a> */}
+          {/* <Divider type="vertical" /> */}
+          {this.state.access &&
+          Object.keys(this.state.access).length &&
+          this.state.access.hasOwnProperty('deleteDevice') ? (
+            <Fragment>
+              <Popconfirm
+                title="确定删除该选项么?"
+                onConfirm={() => this.popConfirm(record)}
+                onCancel={() => {}}
+                okText="Yes"
+                cancelText="No"
+              >
+                <a>{this.state.access.deleteDevice.name}</a>
+              </Popconfirm>
+            </Fragment>
+          ) : null}
         </Fragment>
       ),
     },
   ];
 
   componentDidMount() {
+    const {
+      location: { pathname },
+      menuTree,
+    } = this.props;
+    const access = getAccess(pathname, menuTree);
+    this.setState({
+      access: access.childMap || {},
+    });
     this.commonPost();
   }
   commonPost = () => {
@@ -379,9 +395,13 @@ class TableList extends PureComponent {
           </Col>
           <Col md={8} sm={24}>
             <span className={styles.submitButtons}>
-              <Button type="primary" htmlType="submit">
-                查询
-              </Button>
+              {this.state.access &&
+              Object.keys(this.state.access).length &&
+              this.state.access.hasOwnProperty('queryDeviceList') ? (
+                <Button type="primary" htmlType="submit">
+                  {this.state.access.queryDeviceList.name}
+                </Button>
+              ) : null}
               <Button style={{ marginLeft: 8 }} onClick={this.handleFormReset}>
                 重置
               </Button>
@@ -398,6 +418,7 @@ class TableList extends PureComponent {
       bms: { bmsList },
     } = this.props;
     const {
+      access,
       selectedRows,
       modalVisible,
       updateModalVisible,
@@ -420,30 +441,33 @@ class TableList extends PureComponent {
       handleDetailModalVisible: this.handleDetailModalVisible,
       handleDetail: this.handleDetail,
     };
-
+    console.log(access);
     return (
       <PageHeaderWrapper title="设备列表">
         <Card bordered={false}>
           <div className={styles.tableList}>
             <div className={styles.tableListForm}>{this.renderForm()}</div>
             <div className={styles.tableListOperator}>
-              <Button icon="plus" type="primary" onClick={() => this.handleModalVisible(true)}>
-                新建
-              </Button>
+              {access && Object.keys(access).length && access.hasOwnProperty('addDevice') ? (
+                <Button icon="plus" type="primary" onClick={() => this.handleModalVisible(true)}>
+                  {access.addDevice.name}
+                </Button>
+              ) : null}
               {selectedRows.length > 0 && (
                 <span>
                   <Button onClick={() => this.handleMenuClick()}>批量删除</Button>
                 </span>
               )}
             </div>
-            <StandardTable
-              selectedRows={selectedRows}
-              loading={loading}
-              data={bmsList}
-              rowKey={record => record.id}
+            <Table
+              dataSource={bmsList.list}
               columns={this.columns}
-              onSelectRow={this.handleSelectRows}
+              pagination={bmsList.pagination}
               onChange={this.handleStandardTableChange}
+              loading={loading}
+              rowKey={record => record.id}
+              selectedRows={selectedRows}
+              onSelectRow={this.handleSelectRows}
             />
           </div>
         </Card>

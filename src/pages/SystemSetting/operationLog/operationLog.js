@@ -1,31 +1,18 @@
 import React, { PureComponent, Fragment } from 'react';
 import { connect } from 'dva';
-import {
-  Row,
-  Col,
-  Card,
-  Form,
-  Button,
-  DatePicker,
-  message,
-  Divider,
-  Badge,
-  Table,
-  Popconfirm,
-} from 'antd';
+import { Row, Col, Card, Form, Button, DatePicker, Table } from 'antd';
+import { getAccess } from '@/utils/accessFunctions';
 import PageHeaderWrapper from '@/components/PageHeaderWrapper';
 import styles from './operationLog.less';
 
 const FormItem = Form.Item;
 const { RangePicker } = DatePicker;
 
-const statusMap = ['success', 'error'];
-const status = ['启用', '关闭'];
-
 /* eslint react/no-multi-comp:0 */
-@connect(({ loading, system }) => ({
+@connect(({ loading, system, menuTree }) => ({
   system,
   loading: loading.effects['system/fetchQueryLog'],
+  menuTree: menuTree.menuData,
 }))
 @Form.create()
 class TableList extends PureComponent {
@@ -49,14 +36,6 @@ class TableList extends PureComponent {
       dataIndex: 'userName',
       key: 'userName',
     },
-    // , {
-    //     title: '状态',
-    //     dataIndex: 'inUse',
-    //     key: 'inUse',
-    //     render(val) {
-    //         return <Badge status={statusMap[val]} text={status[val]} />;
-    //     },
-    // }
     {
       title: '修改时间',
       dataIndex: 'gmt_modified',
@@ -80,11 +59,20 @@ class TableList extends PureComponent {
   ];
 
   componentDidMount() {
-    const { dispatch } = this.props;
+    const {
+      dispatch,
+      location: { pathname },
+      menuTree,
+    } = this.props;
     const { formValues } = this.state;
     dispatch({
       type: 'system/fetchQueryLog',
       payload: formValues,
+    });
+
+    const access = getAccess(pathname, menuTree);
+    this.setState({
+      access: access.childRoutes || {},
     });
   }
   // 分页change

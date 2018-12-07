@@ -16,7 +16,7 @@ export default [
     Routes: ['src/pages/Authorized'],
     // authority: ['admin'],
     routes: [
-      { path: '/', redirect: '/equimanage/equilist' },
+      { path: '/', redirect: '/exception/welcome' },
       // 系统设置
       {
         name: '系统设置',
@@ -24,24 +24,25 @@ export default [
         path: '/systemSetting',
         routes: [
           {
+            path: '/systemSetting/accountMenage',
+            name: '账号管理',
+            component: './systemSetting/accountMenage/accountMenage',
+          },
+          {
+            // authority: ['guest'],
             path: '/systemSetting/roleManage',
             name: '角色管理',
-            component: './SystemSetting/roleManage/roleManage',
+            component: './systemSetting/roleManage/roleManage',
           },
           {
             path: '/systemSetting/funcConfig',
             name: '权限管理',
-            component: './SystemSetting/funcConfig/funcConfig',
+            component: './systemSetting/funcConfig/funcConfig',
           },
           {
             path: '/systemSetting/operationLog',
             name: '操作日志',
-            component: './SystemSetting/operationLog/operationLog',
-          },
-          {
-            path: '/systemSetting/accountMenage',
-            name: '账号管理',
-            component: './SystemSetting/accountMenage/accountMenage',
+            component: './systemSetting/operationLog/operationLog',
           },
         ],
       },
@@ -49,25 +50,25 @@ export default [
       {
         name: '应用管理',
         icon: 'appstore',
-        path: '/appmanage',
+        path: '/appManage',
         routes: [
           {
-            path: '/appmanage/applist',
+            path: '/appManage/appList',
             name: '应用列表',
-            component: './AppManage/AppList',
+            component: './appManage/appList/appList',
           },
         ],
       },
       // BMS
       {
-        name: '设备管理',
+        name: 'BMS设备管理',
         icon: 'appstore',
-        path: '/equimanage',
+        path: '/equiManage',
         routes: [
           {
-            path: '/equimanage/equilist',
+            path: '/equiManage/equiList',
             name: '设备列表',
-            component: './EquiManage/EquiList',
+            component: './equiManage/equiList/equiList',
           },
         ],
       },
@@ -75,17 +76,17 @@ export default [
       {
         name: '设备管理',
         icon: 'appstore',
-        path: '/obdmanage',
+        path: '/obdManage',
         routes: [
           {
-            path: '/obdmanage/obdlist',
+            path: '/obdManage/terminalManage',
             name: '终端管理',
-            component: './ObdManage/carManage/ObdList',
+            component: './obdManage/terminalManage/terminalManage',
           },
           {
-            path: '/obdmanage/simManage',
+            path: '/obdManage/simManage',
             name: 'SIM卡管理',
-            component: './ObdManage/simManage/simManage',
+            component: './obdManage/simManage/simManage',
           },
         ],
       },
@@ -93,12 +94,12 @@ export default [
       {
         name: '报警管理',
         icon: 'appstore',
-        path: '/alarmManage',
+        path: '/warnManage',
         routes: [
           {
-            path: '/alarmManage/alarmQuery',
+            path: '/warnManage/warnList',
             name: '报警查询',
-            component: './alarmManage/alarmQuery/alarmQuery',
+            component: './warnManage/warnList/warnList',
           },
         ],
       },
@@ -106,6 +107,11 @@ export default [
         path: '/exception',
         routes: [
           // exception
+          {
+            path: '/exception/welcome',
+            name: 'not-permission',
+            component: './Exception/hello',
+          },
           {
             path: '/exception/403',
             name: 'not-permission',

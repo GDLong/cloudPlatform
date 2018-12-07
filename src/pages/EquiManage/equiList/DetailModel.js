@@ -8,7 +8,6 @@ import {
   Divider,
   Button,
   message,
-  Switch,
   Radio,
   Icon,
   Row,
@@ -21,21 +20,7 @@ import {
   Skeleton,
   InputNumber,
 } from 'antd';
-import {
-  G2,
-  Chart,
-  Geom,
-  Axis,
-  Coord,
-  Label,
-  Legend,
-  View,
-  Guide,
-  Shape,
-  Facet,
-  Tooltip,
-  Util,
-} from 'bizcharts';
+import { G2, Chart, Geom, Axis, Legend, Tooltip } from 'bizcharts';
 import { ChartCard, Bar, WaterWave, Field } from '@/components/Charts';
 import coordtransform from 'coordtransform';
 import { connect } from 'dva';
@@ -43,6 +28,7 @@ import DataSet from '@antv/data-set';
 import DescriptionList from '@/components/DescriptionList';
 import BMap from 'BMap';
 import styles from './EquiList.less';
+import carImg from '@/assets/car.png';
 const FormItem = Form.Item;
 const Option = Select.Option;
 const TabPane = Tabs.TabPane;
@@ -1060,7 +1046,7 @@ class CustomizedForm extends PureComponent {
     var map = new BMap.Map('mapContainer', { enableMapClick: false });
     map.enableScrollWheelZoom();
 
-    var icon = new BMap.Icon('http://lbsyun.baidu.com/jsdemo/img/car.png', new BMap.Size(52, 26), {
+    var icon = new BMap.Icon(carImg, new BMap.Size(26, 26), {
       anchor: new BMap.Size(27, 13),
     }); //声明公交icon
     var mkrBus = new BMap.Marker(arrPois[0], { icon: icon }); //声明公交标注

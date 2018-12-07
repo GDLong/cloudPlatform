@@ -15,6 +15,7 @@ import {
   Select,
   Popconfirm,
 } from 'antd';
+import { getAccess } from '@/utils/accessFunctions';
 import PageHeaderWrapper from '@/components/PageHeaderWrapper';
 import SimModel from './simModel';
 import styles from './simManage.less';
@@ -27,13 +28,15 @@ const statusMap = ['success', 'error'];
 const status = ['启用', '关闭'];
 
 /* eslint react/no-multi-comp:0 */
-@connect(({ loading, obd }) => ({
+@connect(({ loading, obd, menuTree }) => ({
   obd,
   loading: loading.models.obd,
+  menuTree: menuTree.menuData,
 }))
 @Form.create()
 class TableList extends PureComponent {
   state = {
+    access: {},
     formValues: {
       page: '1',
       pageSize: '10',
@@ -84,28 +87,49 @@ class TableList extends PureComponent {
       title: '操作',
       render: record => (
         <Fragment>
-          <a onClick={() => this.handleModalVisible(true, record)}>编辑</a>
-          <Divider type="vertical" />
-          <Popconfirm
-            title="确定删除该选项么?"
-            onConfirm={() => this.popConfirm(record)}
-            onCancel={() => {}}
-            okText="Yes"
-            cancelText="No"
-          >
-            <a>删除</a>
-          </Popconfirm>
+          {this.state.access &&
+          Object.keys(this.state.access).length &&
+          this.state.access.hasOwnProperty('updateSimCard') ? (
+            <Fragment>
+              <a onClick={() => this.handleModalVisible(true, record)}>
+                {this.state.access.updateSimCard.name}
+              </a>
+              <Divider type="vertical" />
+            </Fragment>
+          ) : null}
+          {this.state.access &&
+          Object.keys(this.state.access).length &&
+          this.state.access.hasOwnProperty('deleteSimCard') ? (
+            <Popconfirm
+              title="确定删除该选项么?"
+              onConfirm={() => this.popConfirm(record)}
+              onCancel={() => {}}
+              okText="Yes"
+              cancelText="No"
+            >
+              <a>{this.state.access.deleteSimCard.name}</a>
+            </Popconfirm>
+          ) : null}
         </Fragment>
       ),
     },
   ];
 
   componentDidMount() {
-    const { dispatch } = this.props;
+    const {
+      dispatch,
+      location: { pathname },
+      menuTree,
+    } = this.props;
     const { formValues } = this.state;
     dispatch({
       type: 'obd/fetchQuerySimCard',
       payload: formValues,
+    });
+
+    const access = getAccess(pathname, menuTree);
+    this.setState({
+      access: access.childMap || {},
     });
   }
   // 分页change
@@ -250,9 +274,13 @@ class TableList extends PureComponent {
           </Col>
           <Col md={6} sm={24}>
             <span className={styles.submitButtons}>
-              <Button type="primary" htmlType="submit">
-                查询
-              </Button>
+              {this.state.access &&
+              Object.keys(this.state.access).length &&
+              this.state.access.hasOwnProperty('querySimCard') ? (
+                <Button type="primary" htmlType="submit">
+                  {this.state.access.querySimCard.name}
+                </Button>
+              ) : null}
               <Button style={{ marginLeft: 8 }} onClick={this.handleFormReset}>
                 重置
               </Button>
@@ -283,21 +311,24 @@ class TableList extends PureComponent {
       obd: { simCardList },
       loading,
     } = this.props;
-    const { modalVisible, modalValues } = this.state;
+    const { modalVisible, modalValues, access } = this.state;
     // 新建
     const handleMethods = {
       handleSubmit: this.handleSubmit,
       handleModalVisible: this.handleModalVisible,
     };
+    console.log(access);
     return (
       <PageHeaderWrapper title="SIM卡管理">
         <Card bordered={false}>
           <div className={styles.tableList}>
             <div className={styles.tableListForm}>{this.renderSimpleForm()}</div>
             <div className={styles.tableListOperator}>
-              <Button icon="plus" type="primary" onClick={() => this.handleModalVisible(true)}>
-                新建
-              </Button>
+              {access && Object.keys(access).length && access.hasOwnProperty('addSimCard') ? (
+                <Button icon="plus" type="primary" onClick={() => this.handleModalVisible(true)}>
+                  {access.addSimCard.name}
+                </Button>
+              ) : null}
             </div>
             <div className={styles.tableList}>
               <Table

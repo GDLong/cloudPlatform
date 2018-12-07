@@ -130,6 +130,12 @@ export async function accountLogin(params) {
     body: params,
   });
 }
+export async function accountLoginOut(params) {
+  return request(server + 'user/logOut', {
+    method: 'POST',
+    body: params,
+  });
+}
 
 export async function register(params) {
   return request('/api/register', {
@@ -231,6 +237,11 @@ export async function deleteUser(params) {
 // gdl-Menu
 export async function queryMenu() {
   return request('/api/getMenuTree');
+}
+export async function queryAllMenu() {
+  return request(server + 'user/queryUserMenu', {
+    method: 'POST',
+  });
 }
 // gdl---bms
 export async function getBmsList(params) {

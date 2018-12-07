@@ -14,16 +14,19 @@ import {
 } from 'antd';
 import PageHeaderWrapper from '@/components/PageHeaderWrapper';
 import AccountModel from './accountModel';
+import { getAccess } from '@/utils/accessFunctions';
 const statusMap = ['success', 'error'];
 const status = ['启用', '关闭'];
 
 @Form.create()
-@connect(({ system, loading }) => ({
+@connect(({ system, loading, menuTree }) => ({
   system,
   loading: loading.models.system,
+  menuTree: menuTree.menuData,
 }))
 class CardList extends PureComponent {
   state = {
+    access: {},
     modalVisible: false,
     modalValue: {},
     queryCondition: {
@@ -34,11 +37,20 @@ class CardList extends PureComponent {
     },
   };
   componentDidMount() {
-    const { dispatch } = this.props;
+    const {
+      dispatch,
+      location: { pathname },
+      menuTree,
+    } = this.props;
     const { queryCondition } = this.state;
     dispatch({
       type: 'system/fetchQueryUser',
       payload: queryCondition,
+    });
+
+    const access = getAccess(pathname, menuTree);
+    this.setState({
+      access: access.childMap || {},
     });
   }
   handlePageChange = (pagination, filtersArg, sorter) => {
@@ -169,7 +181,6 @@ class CardList extends PureComponent {
     }
   };
   // 编辑分类--end
-  handleButton() {}
   popConfirm(record) {
     const { dispatch } = this.props;
     const { queryCondition } = this.state;
@@ -196,9 +207,8 @@ class CardList extends PureComponent {
       system: { AllUser },
       loading,
     } = this.props;
-    const { modalVisible, modalValue } = this.state;
+    const { modalVisible, modalValue, access } = this.state;
 
-    // if (AllUser.code !== "000000") {message.warning(AllUser.msg);return;}
     const columns = [
       {
         title: '序号',
@@ -218,6 +228,10 @@ class CardList extends PureComponent {
         },
       },
       {
+        title: '用户厂商',
+        dataIndex: 'producer',
+      },
+      {
         title: '修改时间',
         dataIndex: 'gmt_modified',
       },
@@ -231,7 +245,7 @@ class CardList extends PureComponent {
             <Switch
               checkedChildren="启"
               unCheckedChildren="禁"
-              defaultChecked={record.inUse ? false : true}
+              checked={record.inUse ? false : true}
               loading={loading}
               style={{ position: 'relative', top: '-2px' }}
               onChange={e => this.handleSwitchChange(e, record)}

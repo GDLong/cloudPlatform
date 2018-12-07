@@ -96,8 +96,11 @@ class BasicLayout extends React.PureComponent {
   }
   componentDidMount() {
     const { dispatch } = this.props;
+    // dispatch({
+    //   type: 'menuTree/getMenu',
+    // });
     dispatch({
-      type: 'menuTree/getMenu',
+      type: 'menuTree/getAllMenu',
     });
     this.renderRef = requestAnimationFrame(() => {
       this.setState({
@@ -325,9 +328,8 @@ class BasicLayout extends React.PureComponent {
   }
 }
 
-export default connect(({ menuTree, loading, global, setting }) => ({
+export default connect(({ menuTree, global, setting }) => ({
   menuTree,
-  loading: loading.effects['menuTree/getMenu'],
   collapsed: global.collapsed,
   layout: setting.layout,
   ...setting,

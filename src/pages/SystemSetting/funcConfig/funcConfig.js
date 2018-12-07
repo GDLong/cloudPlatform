@@ -1,34 +1,24 @@
 import React, { PureComponent } from 'react';
 import { connect } from 'dva';
 import moment from 'moment';
-import {
-  Card,
-  Button,
-  Table,
-  Badge,
-  Menu,
-  Dropdown,
-  Icon,
-  Fragment,
-  Divider,
-  Popconfirm,
-  Input,
-  message,
-} from 'antd';
+import { Card, Button, Table, Badge, Icon, Divider, Popconfirm, message } from 'antd';
+import { getAccess } from '@/utils/accessFunctions';
 import PageHeaderWrapper from '@/components/PageHeaderWrapper';
 import { formatId } from '@/utils/utils';
 import EditorClass from './editorClass';
 import EditorMenu from './editorMenu';
 
-@connect(({ system, loading }) => ({
+@connect(({ system, loading, menuTree }) => ({
   system,
   loading: loading.models.system,
+  menuTree: menuTree.menuData,
 }))
 class CardList extends PureComponent {
   constructor(props) {
     super(props);
 
     this.state = {
+      access: {},
       allMenu: {},
       editorValue: {},
       editorShow: false,
@@ -63,6 +53,15 @@ class CardList extends PureComponent {
     },
   ];
   componentDidMount() {
+    const {
+      location: { pathname },
+      menuTree,
+    } = this.props;
+    const access = getAccess(pathname, menuTree);
+    this.setState({
+      access: access.childRoutes || {},
+    });
+
     this.reloadFn();
   }
   reloadFn() {

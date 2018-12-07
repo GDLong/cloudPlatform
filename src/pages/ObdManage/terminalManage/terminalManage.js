@@ -1,27 +1,19 @@
 import React, { PureComponent, Fragment } from 'react';
 import { connect } from 'dva';
-import moment from 'moment';
 import {
   Row,
   Col,
   Card,
   Form,
   Input,
-  Select,
-  Icon,
   Button,
-  Dropdown,
-  Menu,
-  InputNumber,
   DatePicker,
   Modal,
   message,
-  Badge,
   Divider,
-  Steps,
-  Radio,
   Popconfirm,
 } from 'antd';
+import { getAccess } from '@/utils/accessFunctions';
 import StandardTable from '@/components/StandardTable';
 import PageHeaderWrapper from '@/components/PageHeaderWrapper';
 import CreateForm from './CreateModel';
@@ -29,29 +21,21 @@ import EditorModel from './EditorModel';
 import DetailModel from './DetailModel';
 import LocalModel from './LocalModel';
 
-import styles from './ObdList.less';
+import styles from './terminalManage.less';
 
 const FormItem = Form.Item;
-const { Step } = Steps;
-const { TextArea } = Input;
-const { Option } = Select;
-const RadioGroup = Radio.Group;
 const { RangePicker } = DatePicker;
-const getValue = obj =>
-  Object.keys(obj)
-    .map(key => obj[key])
-    .join(',');
-const statusMap = ['error', 'success'];
-const status = ['关闭', '运行中'];
 
 /* eslint react/no-multi-comp:0 */
-@connect(({ loading, obd }) => ({
+@connect(({ loading, obd, menuTree }) => ({
   obd,
   loading: loading.models.obd,
+  menuTree: menuTree.menuData,
 }))
 @Form.create()
 class TableList extends PureComponent {
   state = {
+    access: {},
     modalVisible: false,
     updateModalVisible: false,
     detailModalVisible: false,
@@ -94,31 +78,59 @@ class TableList extends PureComponent {
       title: '操作',
       render: (text, record) => (
         <Fragment>
-          <a onClick={() => this.handleUpdateModalVisible(true, record)}>编辑</a>
-          <Divider type="vertical" />
-          <a onClick={() => this.handleDetailModalVisible(true, record)}>查看</a>
-          {/* <Divider type="vertical" />
-                    <a onClick={() => this.handleLocalModalVisible(true, record)}>位置轨迹</a> */}
-          <Divider type="vertical" />
-          <Popconfirm
-            title="确定删除该选项么?"
-            onConfirm={() => this.popConfirm(record)}
-            onCancel={() => this.popConcel(record)}
-            okText="Yes"
-            cancelText="No"
-          >
-            <a>删除</a>
-          </Popconfirm>
+          {this.state.access &&
+          Object.keys(this.state.access).length &&
+          this.state.access.hasOwnProperty('updateVehicle') ? (
+            <Fragment>
+              <a onClick={() => this.handleUpdateModalVisible(true, record)}>
+                {this.state.access.updateVehicle.name}
+              </a>
+              <Divider type="vertical" />
+            </Fragment>
+          ) : null}
+          {this.state.access &&
+          Object.keys(this.state.access).length &&
+          this.state.access.hasOwnProperty('queryObdData') ? (
+            <Fragment>
+              <a onClick={() => this.handleDetailModalVisible(true, record)}>
+                {this.state.access.queryObdData.name}
+              </a>
+              <Divider type="vertical" />
+            </Fragment>
+          ) : null}
+          {this.state.access &&
+          Object.keys(this.state.access).length &&
+          this.state.access.hasOwnProperty('deleteVehicle') ? (
+            <Popconfirm
+              title="确定删除该选项么?"
+              onConfirm={() => this.popConfirm(record)}
+              onCancel={() => this.popConcel(record)}
+              okText="Yes"
+              cancelText="No"
+            >
+              <a>{this.state.access.deleteVehicle.name}</a>
+            </Popconfirm>
+          ) : null}
+
+          {/* <Divider type="vertical" /><a onClick={() => this.handleLocalModalVisible(true, record)}>位置轨迹</a> */}
         </Fragment>
       ),
     },
   ];
 
   componentDidMount() {
-    const { dispatch } = this.props;
+    const {
+      dispatch,
+      location: { pathname },
+      menuTree,
+    } = this.props;
     dispatch({
       type: 'obd/fetchObdList',
       payload: { ...this.state.formValues },
+    });
+    const access = getAccess(pathname, menuTree);
+    this.setState({
+      access: access.childMap || {},
     });
   }
   // 分页change
@@ -384,9 +396,13 @@ class TableList extends PureComponent {
           </Col>
           <Col md={8} sm={24}>
             <span className={styles.submitButtons}>
-              <Button type="primary" htmlType="submit">
-                查询
-              </Button>
+              {this.state.access &&
+              Object.keys(this.state.access).length &&
+              this.state.access.hasOwnProperty('queryVehicleList') ? (
+                <Button type="primary" htmlType="submit">
+                  {this.state.access.queryVehicleList.name}
+                </Button>
+              ) : null}
               <Button style={{ marginLeft: 8 }} onClick={this.handleFormReset}>
                 重置
               </Button>
@@ -403,6 +419,7 @@ class TableList extends PureComponent {
       obd: { obdList },
     } = this.props;
     const {
+      access,
       selectedRows,
       modalVisible,
       updateModalVisible,
@@ -432,21 +449,27 @@ class TableList extends PureComponent {
       handleLocalModalVisible: this.handleLocalModalVisible,
       // handleLocal: this.handleLocal,
     };
-
     return (
       <PageHeaderWrapper title="OBD列表">
         <Card bordered={false}>
           <div className={styles.tableList}>
             <div className={styles.tableListForm}>{this.renderSimpleForm()}</div>
             <div className={styles.tableListOperator}>
-              <Button icon="plus" type="primary" onClick={() => this.handleModalVisible(true)}>
-                新建
-              </Button>
-              {selectedRows.length > 0 && (
-                <span>
-                  <Button onClick={() => this.handleMenuClick()}>批量删除</Button>
-                </span>
-              )}
+              {access && Object.keys(access).length && access.hasOwnProperty('addVehicle') ? (
+                <Button icon="plus" type="primary" onClick={() => this.handleModalVisible(true)}>
+                  {access.addVehicle.name}
+                </Button>
+              ) : null}
+              {selectedRows.length > 0 &&
+                access &&
+                Object.keys(access).length &&
+                access.hasOwnProperty('deleteVehicle') && (
+                  <span>
+                    <Button onClick={() => this.handleMenuClick()}>
+                      {'批量' + access.deleteVehicle.name}
+                    </Button>
+                  </span>
+                )}
             </div>
             <StandardTable
               selectedRows={selectedRows}

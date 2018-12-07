@@ -48,6 +48,7 @@ export default class GlobalHeaderRight extends PureComponent {
       onMenuClick,
       onNoticeClear,
       theme,
+      menuTree: { userInfo },
     } = this.props;
     const menu = (
       <Menu className={styles.menu} selectedKeys={[]} onClick={onMenuClick}>
@@ -163,7 +164,9 @@ export default class GlobalHeaderRight extends PureComponent {
               src="https://gw.alipayobjects.com/zos/rmsportal/tXlLQhLvkEelMstLyHiN.svg"
               alt="avatar"
             />
-            <span className={styles.name}>DT.Name</span>
+            <span className={styles.name}>
+              {userInfo.nickName ? userInfo.nickName : userInfo.userName}
+            </span>
           </span>
         </Dropdown>
         {/* <SelectLang className={styles.action} /> */}

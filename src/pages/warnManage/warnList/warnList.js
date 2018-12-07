@@ -1,40 +1,25 @@
 import React, { PureComponent, Fragment } from 'react';
 import { connect } from 'dva';
-import {
-  Row,
-  Col,
-  Card,
-  Form,
-  Button,
-  DatePicker,
-  message,
-  Divider,
-  Popconfirm,
-  Table,
-  Input,
-} from 'antd';
+import { Row, Col, Card, Form, Button, DatePicker, Table, Input } from 'antd';
+import { getAccess } from '@/utils/accessFunctions';
 import PageHeaderWrapper from '@/components/PageHeaderWrapper';
 import DetailModel from './DetailModel';
 
-import styles from './alarmQuery.less';
+import styles from './warnList.less';
 
 const FormItem = Form.Item;
 const { RangePicker } = DatePicker;
-const getValue = obj =>
-  Object.keys(obj)
-    .map(key => obj[key])
-    .join(',');
-const statusMap = ['error', 'success'];
-const status = ['关闭', '运行中'];
 
 /* eslint react/no-multi-comp:0 */
-@connect(({ loading, obd }) => ({
-  obd,
-  loading: loading.models.obd,
+@connect(({ loading, warning, menuTree }) => ({
+  loading: loading.models.warning,
+  warning,
+  menuTree: menuTree.menuData,
 }))
 @Form.create()
 class TableList extends PureComponent {
   state = {
+    access: {},
     modalVisible: false,
     updateModalVisible: false,
     detailModalVisible: false,
@@ -75,17 +60,36 @@ class TableList extends PureComponent {
       title: '操作',
       render: (text, record) => (
         <Fragment>
-          <a onClick={() => this.handleDetailModalVisible(true, record)}>查看报警</a>
+          {this.state.access &&
+          Object.keys(this.state.access).length &&
+          this.state.access.hasOwnProperty('queryAlarmData') ? (
+            <a onClick={() => this.handleDetailModalVisible(true, record)}>
+              {this.state.access.queryAlarmData.name}
+            </a>
+          ) : null}
         </Fragment>
       ),
     },
   ];
 
   componentDidMount() {
-    const { dispatch } = this.props;
+    const {
+      dispatch,
+      location: { pathname },
+      menuTree,
+    } = this.props;
+    const { formValues } = this.state;
     dispatch({
-      type: 'obd/fetchObdList',
-      payload: { ...this.state.formValues },
+      type: 'warning/fetchWarningList',
+      payload: formValues,
+      callback: res => {
+        console.log('res', res);
+      },
+    });
+
+    const access = getAccess(pathname, menuTree);
+    this.setState({
+      access: access.childMap || {},
     });
   }
   // 分页change
@@ -180,6 +184,7 @@ class TableList extends PureComponent {
     const {
       form: { getFieldDecorator },
     } = this.props;
+    const { access } = this.state;
     return (
       <Form onSubmit={this.handleSearch} layout="inline">
         <Row gutter={{ md: 8, lg: 24, xl: 48 }}>
@@ -208,9 +213,11 @@ class TableList extends PureComponent {
           </Col>
           <Col md={8} sm={24}>
             <span className={styles.submitButtons}>
-              <Button type="primary" htmlType="submit">
-                查询
-              </Button>
+              {access && Object.keys(access).length && access.hasOwnProperty('queryVehicleList') ? (
+                <Button type="primary" htmlType="submit">
+                  {access.queryVehicleList.name}
+                </Button>
+              ) : null}
               <Button style={{ marginLeft: 8 }} onClick={this.handleFormReset}>
                 重置
               </Button>
@@ -224,9 +231,10 @@ class TableList extends PureComponent {
   render() {
     const {
       loading,
-      obd: { obdList },
+      warning: { warningLists },
     } = this.props;
-    const { detailModalVisible, detailFormValues } = this.state;
+    const { detailModalVisible, detailFormValues, access } = this.state;
+    // console.log(access)
 
     // 查看
     const detailMethods = {
@@ -239,14 +247,16 @@ class TableList extends PureComponent {
         <Card bordered={false}>
           <div className={styles.tableListForm}>{this.renderSimpleForm()}</div>
           <div className={styles.tableList}>
-            <Table
-              loading={loading}
-              dataSource={obdList.list}
-              columns={this.columns}
-              pagination={obdList.pagination}
-              onChange={this.handleStandardTableChange}
-              rowKey={record => record.id}
-            />
+            {warningLists && Object.keys(warningLists).length ? (
+              <Table
+                loading={loading}
+                dataSource={warningLists.list}
+                columns={this.columns}
+                pagination={warningLists.pagination}
+                onChange={this.handleStandardTableChange}
+                rowKey={record => record.id}
+              />
+            ) : null}
           </div>
         </Card>
         {detailFormValues && Object.keys(detailFormValues).length ? (

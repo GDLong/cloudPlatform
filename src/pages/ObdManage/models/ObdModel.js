@@ -23,8 +23,9 @@ export default {
   },
 
   effects: {
-    *fetchObdList({ payload }, { call, put }) {
+    *fetchObdList({ payload, callback }, { call, put }) {
       const response = yield call(queryVehicleList, payload);
+      if (callback) callback(response);
       yield put({
         type: 'queryObdList',
         payload: response,

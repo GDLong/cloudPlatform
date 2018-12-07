@@ -4,8 +4,9 @@ import { Card, Button, Icon, List, Form, Modal, message, Input } from 'antd';
 
 import Ellipsis from '@/components/Ellipsis';
 import PageHeaderWrapper from '@/components/PageHeaderWrapper';
+import { getAccess } from '@/utils/accessFunctions';
 
-import styles from './AppList.less';
+import styles from './appList.less';
 const FormItem = Form.Item;
 
 const CreateModel = Form.create()(props => {
@@ -34,23 +35,34 @@ const CreateModel = Form.create()(props => {
   );
 });
 @Form.create()
-@connect(({ list, loading }) => ({
+@connect(({ list, loading, menuTree }) => ({
   list,
   loading: loading.models.list,
+  menuTree: menuTree.menuData,
 }))
 
 // @Form.create()
 class CardList extends PureComponent {
   state = {
+    access: {},
     modalVisible: false,
   };
   componentDidMount() {
-    const { dispatch } = this.props;
+    const {
+      dispatch,
+      location: { pathname },
+      menuTree,
+    } = this.props;
     dispatch({
       type: 'list/fetch',
       payload: {
         count: 8,
       },
+    });
+
+    const access = getAccess(pathname, menuTree);
+    this.setState({
+      access: access.childRoutes || {},
     });
   }
   // 编辑应用
@@ -75,14 +87,6 @@ class CardList extends PureComponent {
     });
   };
   handleAdd = fields => {
-    // const { dispatch } = this.props;
-    // dispatch({
-    //     type: 'rule/add',
-    //     payload: {
-    //         desc: fields.desc,
-    //     },
-    // });
-
     message.success('添加成功');
     this.handleModalVisible();
   };

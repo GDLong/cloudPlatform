@@ -38,30 +38,37 @@ class CustomizedForm extends PureComponent {
   // 新增功能窗口显示或隐藏
   handleModelVisible = (flag, record, index) => {
     const { form } = this.props;
-    form.validateFields((err, fieldsValue) => {
-      if (err) return;
-      const {
-        functAuthority: { child },
-      } = this.state;
-      let num = 0;
-      if (index === undefined) {
-        num = 0;
-        if (child.length) {
-          num = child.length + 1;
+    if (flag) {
+      form.validateFields((err, fieldsValue) => {
+        if (err) return;
+        const {
+          functAuthority: { child },
+        } = this.state;
+        let num = 0;
+        if (index === undefined) {
+          num = 0;
+          if (child.length) {
+            num = child.length + 1;
+          }
+          this.setState({
+            modelVisible: !!flag,
+            modelValue: record || {},
+            index: num,
+          });
+        } else {
+          this.setState({
+            modelVisible: !!flag,
+            modelValue: record || {},
+            index: index,
+          });
         }
-        this.setState({
-          modelVisible: !!flag,
-          modelValue: record || {},
-          index: num,
-        });
-      } else {
-        this.setState({
-          modelVisible: !!flag,
-          modelValue: record || {},
-          index: index,
-        });
-      }
-    });
+      });
+    } else {
+      this.setState({
+        modelVisible: !!flag,
+        modelValue: record || {},
+      });
+    }
   };
   // 新增功能
   handleModelSubmit = () => {

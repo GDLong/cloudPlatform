@@ -4,12 +4,13 @@ import { connect } from 'dva';
 import BMap from 'BMap';
 import coordtransform from 'coordtransform';
 import styles from './BMapLib.less';
+import carImg from '@/assets/car.png';
 const FormItem = Form.Item;
 const { RangePicker } = DatePicker;
 
-@connect(({ obd, loading }) => ({
-  obd,
-  loading: loading.effects['obd/fetchObdWarningList'],
+@connect(({ warning, loading }) => ({
+  warning,
+  loading: loading.effects['warning/fetchWarningListDetails'],
 }))
 class CustomizedForm extends PureComponent {
   columns = [
@@ -52,7 +53,7 @@ class CustomizedForm extends PureComponent {
       pagination: data,
     });
     dispatch({
-      type: 'obd/fetchObdWarningList',
+      type: 'warning/fetchWarningListDetails',
       payload: data,
       callback: res => {
         if (res.alarmEntity.length) {
@@ -85,7 +86,7 @@ class CustomizedForm extends PureComponent {
         warningType = '疲劳报警';
         break;
       case '2':
-        warningType = '疲劳报警';
+        warningType = '分神报警';
         break;
       case '3':
         warningType = '打电话报警';
@@ -125,7 +126,7 @@ class CustomizedForm extends PureComponent {
     );
     map.enableScrollWheelZoom(true); //开启鼠标滚轮缩放
     // 添加地图标示
-    var myIcon = new BMap.Icon('http://lbsyun.baidu.com/jsdemo/img/car.png', new BMap.Size(52, 26));
+    var myIcon = new BMap.Icon(carImg, new BMap.Size(26, 26));
     var marker = new BMap.Marker(point, { icon: myIcon });
     map.addOverlay(marker);
     var opts = {
@@ -137,8 +138,8 @@ class CustomizedForm extends PureComponent {
             <div>车牌号：${values.plateNo}</div>
             <div>报警项目：${type}</div>
             <div>报警时间：${warninGrecord.rptutc}</div>
-            <div>经度：${warninGrecord.lng}</div>
-            <div>纬度：${warninGrecord.lat}</div>
+            <div>经度：${warninGrecord.lng ? warninGrecord.lng : '未知'}</div>
+            <div>纬度：${warninGrecord.lat ? warninGrecord.lat : '未知'}</div>
         `;
     var infoWindow = new BMap.InfoWindow(innerText, opts); // 创建信息窗口对象
     marker.openInfoWindow(infoWindow); //开启信息窗口
@@ -171,9 +172,21 @@ class CustomizedForm extends PureComponent {
         pagination: data,
       });
       dispatch({
-        type: 'obd/fetchObdWarningList',
+        type: 'warning/fetchWarningListDetails',
         payload: data,
         callback: res => {
+          if (res.code !== '000000') {
+            message.warning(res.msg);
+            return;
+          }
+          if (!res.alarmEntity.length) {
+            message.warning('未查到数据！');
+            this.setState({
+              line: 0,
+              warninGrecord: {},
+            });
+            return;
+          }
           this.setState(
             {
               line: 0,
@@ -195,7 +208,7 @@ class CustomizedForm extends PureComponent {
       pagination: pager,
     });
     dispatch({
-      type: 'obd/fetchObdWarningList',
+      type: 'warning/fetchWarningListDetails',
       payload: pager,
       callback: res => {
         this.setState(
@@ -231,7 +244,7 @@ class CustomizedForm extends PureComponent {
       handleDetailModalVisible,
       loading,
       form,
-      obd: { warningList },
+      warning: { warningListDetails },
     } = this.props;
     const { warninGrecord } = this.state;
     return (
@@ -272,9 +285,9 @@ class CustomizedForm extends PureComponent {
                 </Row>
               </Form>
               <Table
-                dataSource={warningList.alarmEntity}
+                dataSource={warningListDetails.alarmEntity}
                 columns={this.columns}
-                pagination={warningList.pagination}
+                pagination={warningListDetails.pagination}
                 onChange={this.handleTableChange}
                 loading={loading}
                 rowKey={record => record.id}
@@ -293,14 +306,22 @@ class CustomizedForm extends PureComponent {
             <Col span={14}>
               <Spin spinning={false}>
                 <Card>
-                  <div className={styles.uploadDiv}>
-                    <img
-                      className={styles.uploadImage}
-                      src={'http://39.104.84.146:8888/' + warninGrecord.img}
-                    />
-                  </div>
+                  {warninGrecord && Object.keys(warninGrecord).length ? (
+                    <Fragment>
+                      {warninGrecord.alarmType == 0 ? (
+                        <div className={styles.uploadDiv}>
+                          <img
+                            className={styles.uploadImage}
+                            src={'http://39.104.84.146:8888/' + warninGrecord.img}
+                          />
+                        </div>
+                      ) : (
+                        <div className={styles.uploadDivWarn}>车辆报警</div>
+                      )}
+                      <div id="Bmap" style={{ height: 250 }} />
+                    </Fragment>
+                  ) : null}
                 </Card>
-                <div id="Bmap" style={{ height: 250 }} />
               </Spin>
             </Col>
           </Row>

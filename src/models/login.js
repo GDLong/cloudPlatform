@@ -1,6 +1,6 @@
 import { routerRedux } from 'dva/router';
 import { stringify } from 'qs';
-import { accountLogin } from '@/services/api';
+import { accountLogin, accountLoginOut } from '@/services/api';
 // import { fakeAccountLogin, getFakeCaptcha } from '@/services/api';
 import { setAuthority } from '@/utils/authority';
 import { getPageQuery } from '@/utils/utils';
@@ -47,7 +47,9 @@ export default {
       yield call(getFakeCaptcha, payload);
     },
 
-    *logout(_, { put }) {
+    *logout({ payload, callback }, { call, put }) {
+      const response = yield call(accountLoginOut, payload);
+      if (callback) callback(response);
       yield put({
         type: 'changeLoginStatus',
         payload: {

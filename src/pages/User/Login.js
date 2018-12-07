@@ -22,7 +22,7 @@ class LoginPage extends Component {
     setTimeout(() => {
       bgCanvas;
     }, 10);
-    sessionStorage.removeItem('isLogin');
+    // sessionStorage.removeItem('isLogin');
   }
   onTabChange = type => {
     this.setState({ type });
@@ -56,7 +56,7 @@ class LoginPage extends Component {
         },
         callback: res => {
           if (res.code !== '000000') message.warning(res.msg);
-          sessionStorage.setItem('isLogin', true);
+          // sessionStorage.setItem('isLogin', true);
         },
       });
     }

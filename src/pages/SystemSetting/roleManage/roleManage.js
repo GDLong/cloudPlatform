@@ -3,23 +3,35 @@ import { connect } from 'dva';
 import { Card, Button, Icon, Table, Form, Modal, message, Input, Divider, Popconfirm } from 'antd';
 import PageHeaderWrapper from '@/components/PageHeaderWrapper';
 import RoleModel from './roleModel';
+import { getAccess } from '@/utils/accessFunctions';
 
 @Form.create()
-@connect(({ system, loading }) => ({
+@connect(({ system, loading, menuTree }) => ({
   system,
   loading: loading.models.system,
+  menuTree: menuTree.menuData,
 }))
 
 // @Form.create()
 class CardList extends PureComponent {
   state = {
+    access: {},
     modalVisible: false,
     modalValue: {},
   };
   componentDidMount() {
-    const { dispatch } = this.props;
+    const {
+      dispatch,
+      location: { pathname },
+      menuTree,
+    } = this.props;
     dispatch({
       type: 'system/fetchQueryAllRoles',
+    });
+
+    const access = getAccess(pathname, menuTree);
+    this.setState({
+      access: access.childRoutes || {},
     });
   }
   // 编辑分类--start

@@ -59,7 +59,7 @@ class UserLayout extends React.PureComponent {
                 <span className={styles.title}>盾泰 云控平台</span>
               </Link>
             </div>
-            <div className={styles.desc}>盾泰 云控平台 是常州市最具影响力的云平台</div>
+            <div className={styles.desc} />
           </div>
           {children}
         </div>
