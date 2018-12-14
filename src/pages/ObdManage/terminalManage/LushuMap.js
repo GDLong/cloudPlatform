@@ -1,20 +1,16 @@
 import React, { PureComponent, Fragment } from 'react';
 import {
   Form,
-  Icon,
-  Modal,
-  Slider,
   Button,
   message,
-  Row,
-  Col,
   DatePicker,
-  Table,
-  Popover,
+  Select
 } from 'antd';
 import { connect } from 'dva';
 import BMap from 'BMap';
 import coordtransform from 'coordtransform';
+import DatePickerTime from '@/components/DatePickerTime';
+import '@/utils/LuShu';
 import carImg from '@/assets/car.png';
 import styles from './ObdBmap.less';
 const FormItem = Form.Item;
@@ -29,24 +25,31 @@ class LushuMap extends PureComponent {
   constructor(props) {
     super(props);
     this.state = {
-      loopNumber: 0, //当前回放到第几个点
       loopDataLocal: {}, //当前回放的定位详情
       loopData: [], //轨迹定位详情数组
       loopPath: [], //轨迹点数组
-      speed: 1000, //回放速度
-      mkrBus: {}, //地图标注对象
+      localNo:0,//当前的点
+      map:{},
+      //////////////////////////////
+      lushu:{}
     };
   }
   componentWillReceiveProps(nextProps) {
     this.defaultMap();
   }
   componentWillUnmount() {
-    this.resetLushu(1);
+    const { lushu } = this.state;
+    if (lushu && Object.keys(lushu).length) {
+      this.resetLushu()
+    }
   }
   // 路径查询--默认--渲染地图
   defaultMap = () => {
     const { pointClick } = this.props;
-    this.resetLushu(1);
+    const {lushu} = this.state;
+    if (lushu && Object.keys(lushu).length) {
+      this.resetLushu()
+    }
     var ismap = setInterval(() => {
       if (document.getElementById('Bmap')) {
         clearInterval(ismap);
@@ -58,7 +61,7 @@ class LushuMap extends PureComponent {
           var points = new BMap.Point(gcj02tobd09[0], gcj02tobd09[1]);
 
           var map = new BMap.Map('Bmap'); // 创建Map实例
-          map.centerAndZoom(points, 11); // 初始化地图,设置中心点坐标和地图级别
+          map.centerAndZoom(points, 15); // 初始化地图,设置中心点坐标和地图级别
           var marker = new BMap.Marker(points); // 创建标注
           map.addOverlay(marker); // 将标注添加到地图中
           map.enableScrollWheelZoom(true); //开启鼠标滚轮缩放
@@ -70,7 +73,6 @@ class LushuMap extends PureComponent {
   };
   // 路径查询--轨迹--转化坐标
   mounthPoint = locationList => {
-    this.resetLushu(3);
     const path = {
       points: [],
       queryProp: [],
@@ -109,148 +111,120 @@ class LushuMap extends PureComponent {
     var arrPois = pathPoints;
     var map = new BMap.Map('Bmap', { enableMapClick: false });
     map.enableScrollWheelZoom(true);
-
-    var icon = new BMap.Icon(carImg, new BMap.Size(26, 26), {
-      anchor: new BMap.Size(13, 13),
-    }); //声明公交icon
-    var mkrBus = new BMap.Marker(arrPois[0], { icon: icon }); //声明公交标注
-    map.addOverlay(mkrBus);
+    //声明公交icon
+    // var icon = new BMap.Icon('http://lbsyun.baidu.com/jsdemo/img/car.png', new BMap.Size(52, 26), { anchor: new BMap.Size(27, 13) }); 
+    // var mkrBus = new BMap.Marker(arrPois[0], { icon: icon }); //声明公交标注
+    // map.addOverlay(mkrBus);
     // 画线
     map.addOverlay(new BMap.Polyline(arrPois, { strokeColor: '#111' }));
     map.setViewport(arrPois);
     this.setState(prevState => ({
-      mkrBus: mkrBus,
+      map:map
     }));
     this.lushuPlay();
   };
   // 轨迹播放+++重置循环+++
   lushuPlay = () => {
-    const { loopNumber, loopData, loopPath, speed, mkrBus } = this.state;
-    let num = loopNumber;
-    this.interval = setInterval(() => {
-      console.log('interval', loopNumber);
-      num = num + 1;
-      this.setState(prevState => ({ loopNumber: prevState.loopNumber + 1 }));
-      mkrBus.setPosition(loopPath[num]); //描点
-      this.dataLoopFn(loopData[num]); //刷新位置详情
-      if (num >= loopPath.length) {
-        this.resetLushu(3);
+    const { lushu, loopData, loopPath ,map} = this.state;
+    if (lushu && Object.keys(lushu).length){
+      this.resetLushu()
+    }
+    var _this = this;
+    var lushuBack = new BMapLib.LuShu(map, loopPath, {
+      defaultContent: "",
+      autoView: true,//是否开启自动视野调整，如果开启那么路书在运动过程中会根据视野自动调整
+      icon: new BMap.Icon('http://lbsyun.baidu.com/jsdemo/img/car.png', new BMap.Size(52, 26), { anchor: new BMap.Size(27, 13) }),
+      speed: 500,
+      enableRotation: true,//是否设置marker随着道路的走向进行旋转
+      landmarkPois: [
+        { lng: 116.368287, lat: 39.951169, html: '高速公路收费<div><img src="http://map.baidu.com/img/logo-map.gif"/></div>', pauseTime: 3 }
+      ],
+      callback:function (num) {
+        _this.dataLoopFn(loopData[num],num); //刷新位置详情
       }
-    }, speed);
+    });
+    this.setState(prevState => ({ lushu: lushuBack}));
   };
-  dataLoopFn = data => {
+  lushuStart = ()=>{
+    const { lushu, map, loopPath, localNo} = this.state;
+    map.centerAndZoom(loopPath[localNo], 15);
+    lushu.start();
+  }
+  lushuPause = ()=>{
+    const { lushu } = this.state
+    lushu.pause()
+  }
+  lushuStop = ()=>{
+    const { lushu } = this.state
+    lushu.stop()
+  }
+  dataLoopFn = (data,index) => {
     this.setState(prevState => ({
       loopDataLocal: data,
+      localNo:index
     }));
   };
   // 确定
-  handleSubmit = e => {
-    const { pointClick, dispatch, form } = this.props;
-    e.preventDefault();
-    form.validateFields((err, fieldsValue) => {
-      if (err) return;
-      var rangeValue = fieldsValue['choseTime'];
-      if (rangeValue !== undefined && rangeValue.length !== 0) {
-        rangeValue = [
-          rangeValue[0].format('YYYY-MM-DD HH:mm:ss'),
-          rangeValue[1].format('YYYY-MM-DD HH:mm:ss'),
-        ];
-      } else {
-        rangeValue = ['', ''];
-      }
-      if (pointClick && Object.keys(pointClick).length) {
-        //判断右边列表点击有没有参数传过来
-        dispatch({
-          type: 'obd/fetchObdLocation',
-          payload: {
-            iccid: pointClick.imei,
-            startTime: rangeValue[0],
-            endTime: rangeValue[1],
-          },
-          callback: res => {
-            if (res.code === '000000') {
-              if (res.locationList.length) {
-                this.mounthPoint(res.locationList);
-              } else {
-                message.warning('未找到轨迹！');
-              }
+  handleSubmit = (record) => {
+    const { pointClick, dispatch } = this.props;    
+    if (pointClick && Object.keys(pointClick).length) {
+      //判断右边列表点击有没有参数传过来
+      dispatch({
+        type: 'obd/fetchObdLocation',
+        payload: {
+          iccid: pointClick.imei,
+          ...record
+        },
+        callback: res => {
+          if (res.code === '000000') {
+            if (res.locationList.length) {
+              this.mounthPoint(res.locationList);
             } else {
-              message.warning(res.msg);
+              message.warning('未找到轨迹！');
             }
-          },
-        });
-      } else {
-        message.warning('暂无数据！！');
-      }
-    });
+          } else {
+            message.warning(res.msg);
+          }
+        },
+      });
+    } else {
+      message.warning('暂无数据！！');
+    }
   };
   // 切换速度
   handleSpeed = value => {
+    const {lushu} = this.state
     switch (value) {
-      case 1: //慢放x2
-        this.setState({
-          speed: 2000,
-        });
-        this.resetLushu(2);
-        this.lushuPlay();
+      case 1: //快放x2
+        lushu._opts.speed = 2000
         break;
-      case 2: //慢放x1
-        this.setState({
-          speed: 1500,
-        });
-        this.resetLushu(2);
-        this.lushuPlay();
+      case 2: //快放x1.5
+        lushu._opts.speed = 1000
         break;
-      case 4: //快放x1
-        this.setState({
-          speed: 750,
-        });
-        this.resetLushu(2);
-        this.lushuPlay();
+      case 4: //慢放x1.5
+        lushu._opts.speed = 350
         break;
-      case 5: //快放x2
-        this.setState({
-          speed: 500,
-        });
-        this.resetLushu(2);
-        this.lushuPlay();
+      case 5: //慢放x2
+        lushu._opts.speed = 150
         break;
-
       default:
         //正常
-        this.setState({
-          speed: 1000,
-        });
-        this.resetLushu(2);
-        this.lushuPlay();
+        lushu._opts.speed = 500
         break;
     }
   };
-  // 重置循环
+  // 重置播放轨迹
   resetLushu = flages => {
     // ***1：初始化，2：切换速度，3：回放完成
-    this.interval && clearInterval(this.interval);
-    if (flages == 1) {
-      this.setState({
-        loopNumber: 0, //当前回放到第几个点
-        loopDataLocal: {}, //当前回放的定位详情
-        loopData: [], //轨迹定位详情数组
-        loopPath: [], //轨迹点数组
-        speed: 1000, //回放速度
-        mkrBus: {}, //地图标注对象
-      });
-    } else if (flages == 3) {
-      this.setState({
-        loopNumber: 0, //当前回放到第几个点
-        loopDataLocal: {}, //当前回放的定位详情
-        loopData: [], //轨迹定位详情数组
-        loopPath: [], //轨迹点数组
-        speed: 1000, //回放速度
-      });
-    }
+    const { lushu } = this.state
+    lushu.stop()
+    this.setState(prevState => ({
+        loopDataLocal:{},
+        lushu:{}
+    }))
   };
   render() {
-    const { loopDataLocal, speed } = this.state;
+    const { loopDataLocal,lushu} = this.state;
     const { form } = this.props;
     const Dynamic = data => {
       var item = data.dataProp;
@@ -284,29 +258,7 @@ class LushuMap extends PureComponent {
     };
     return (
       <Fragment>
-        <Form layout="inline" onSubmit={e => this.handleSubmit(e)}>
-          <Row type="flex" justify="space-between">
-            <Col span={18}>
-              <FormItem>
-                {form.getFieldDecorator('choseTime')(
-                  <RangePicker
-                    allowClear
-                    showTime={{ format: 'HH:mm:ss' }}
-                    format="YYYY-MM-DD HH:mm:ss"
-                    style={{ width: '100%' }}
-                  />
-                )}
-              </FormItem>
-            </Col>
-            <Col span={6}>
-              <FormItem>
-                <Button type="primary" htmlType="submit">
-                  轨迹查询
-                </Button>
-              </FormItem>
-            </Col>
-          </Row>
-        </Form>
+        <DatePickerTime handleTable={this.handleSubmit} title="轨迹查询"/>
         <br />
         <div className={styles.markDynamicOut}>
           <div id="Bmap" className={styles.bmap} />
@@ -314,21 +266,20 @@ class LushuMap extends PureComponent {
             <Dynamic dataProp={loopDataLocal} />
           ) : null}
         </div>
-
-        {loopDataLocal && Object.keys(loopDataLocal).length ? (
-          <div className={styles.sliderWrapper}>
-            <Icon type="fast-backward" className={styles.flag} />
-            <Slider
-              defaultValue={3}
-              max={5}
-              min={1}
-              marks={{ 1: 'x2', 2: 'x1', 3: '正常', 4: 'x1', 5: 'x2' }}
-              tooltipVisible={false}
-              onChange={this.handleSpeed}
-            />
-            <Icon type="fast-forward" className={styles.flag} />
+        {lushu && Object.keys(lushu).length ?
+          <div>
+            <Button type="primary" size="small" className={styles.operateBtn} onClick={this.lushuStart}>开始</Button>
+            <Button type="default" size="small" className={styles.operateBtn} onClick={this.lushuPause}>暂停</Button>
+            <Button type="danger" size="small" className={styles.operateBtn} onClick={this.lushuStop}>停止</Button>
+            <Select defaultValue={3} style={{ width: 120 }} onChange={this.handleSpeed}  size="small">
+              <Select.Option value={1}>快速播放x2</Select.Option>
+              <Select.Option value={2}>快速播放x1.5</Select.Option>
+              <Select.Option value={3}>正常播放</Select.Option>
+              <Select.Option value={4}>慢速播放x1.5</Select.Option>
+              <Select.Option value={5}>慢速播放x2</Select.Option>
+            </Select>
           </div>
-        ) : null}
+        :null}
       </Fragment>
     );
   }

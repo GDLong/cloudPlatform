@@ -113,8 +113,8 @@ class TableList extends PureComponent {
       var rangeValue = fieldsValue['chooseTime'];
       if (rangeValue !== undefined && rangeValue.length !== 0) {
         rangeValue = [
-          rangeValue[0].format('YYYY-MM-DD HH:mm'),
-          rangeValue[1].format('YYYY-MM-DD HH:mm'),
+          rangeValue[0].format('YYYY-MM-DD') + " 00:00:01",
+          rangeValue[1].format('YYYY-MM-DD') + " 23:59:59",
         ];
       } else {
         rangeValue = ['', ''];
@@ -141,36 +141,13 @@ class TableList extends PureComponent {
     } = this.props;
     return (
       <Form onSubmit={this.handleSearch} layout="inline">
-        {/* <Row gutter={{ md: 8, lg: 24, xl: 48 }}>
-                    <Col md={8} sm={24}>
-                        <FormItem label="选择时间">
-                            {getFieldDecorator('chooseTime', {})(<RangePicker allowClear showTime={{ format: 'HH:mm:ss' }} format="YYYY-MM-DD HH:mm:ss" style={{ width: "100%" }} />)}
-                        </FormItem>
-                    </Col>
-                    <Col md={8} sm={24}>
-                        <FormItem label="IMEI">
-                            {getFieldDecorator('imei', {})(<Input />)}
-                        </FormItem>
-                    </Col>
-                    <Col md={8} sm={24}>
-                        <FormItem label="车牌号">
-                            {getFieldDecorator('plateNo', {})(<Input />)}
-                        </FormItem>
-                    </Col>
-                </Row> */}
         <Row gutter={{ md: 8, lg: 24, xl: 48 }}>
-          {/* <Col md={8} sm={24}>
-                        <FormItem label="SIM卡号">
-                            {getFieldDecorator('sim', {})(<Input />)}
-                        </FormItem>
-                    </Col> */}
           <Col md={8} sm={24}>
             <FormItem label="选择时间">
               {getFieldDecorator('chooseTime', {})(
                 <RangePicker
                   allowClear
-                  showTime={{ format: 'HH:mm:ss' }}
-                  format="YYYY-MM-DD HH:mm:ss"
+                  format="YYYY-MM-DD"
                   style={{ width: '100%' }}
                 />
               )}

@@ -259,12 +259,11 @@ class TableList extends PureComponent {
     form.validateFields((err, fieldsValue) => {
       if (err) return;
       let values = null;
-
       var rangeValue = fieldsValue['chooseTime'];
       if (rangeValue !== undefined && rangeValue.length !== 0) {
         rangeValue = [
-          rangeValue[0].format('YYYY-MM-DD HH:mm'),
-          rangeValue[1].format('YYYY-MM-DD HH:mm'),
+          rangeValue[0].format('YYYY-MM-DD') + " 00:00:01",
+          rangeValue[1].format('YYYY-MM-DD') + " 23:59:59",
         ];
       } else {
         rangeValue = ['', ''];
@@ -376,8 +375,7 @@ class TableList extends PureComponent {
               {getFieldDecorator('chooseTime', {})(
                 <RangePicker
                   allowClear
-                  showTime={{ format: 'HH:mm:ss' }}
-                  format="YYYY-MM-DD HH:mm:ss"
+                  format="YYYY-MM-DD"
                   style={{ width: '100%' }}
                 />
               )}

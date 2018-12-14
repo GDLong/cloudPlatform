@@ -4,6 +4,7 @@ import { connect } from 'dva';
 import BMap from 'BMap';
 import coordtransform from 'coordtransform';
 import styles from './BMapLib.less';
+import DatePickerTime from '@/components/DatePickerTime';
 import carImg from '@/assets/car.png';
 const FormItem = Form.Item;
 const { RangePicker } = DatePicker;
@@ -147,57 +148,42 @@ class CustomizedForm extends PureComponent {
       this.openInfoWindow(infoWindow); //开启信息窗口
     });
   }
-  handleTable = e => {
-    e.preventDefault();
-    const { dispatch, form } = this.props;
-    form.validateFields((err, fieldsValue) => {
-      if (err) return;
-      var rangeValue = fieldsValue['rangeTime'];
-      if (rangeValue !== undefined && rangeValue.length !== 0) {
-        rangeValue = [
-          rangeValue[0].format('YYYY-MM-DD HH:mm:ss'),
-          rangeValue[1].format('YYYY-MM-DD HH:mm:ss'),
-        ];
-      } else {
-        rangeValue = ['', ''];
-      }
-
-      var data = {
-        ...this.state.pagination,
-        page: 1,
-        startTime: rangeValue[0],
-        endTime: rangeValue[1],
-      };
-      this.setState({
-        pagination: data,
-      });
-      dispatch({
-        type: 'warning/fetchWarningListDetails',
-        payload: data,
-        callback: res => {
-          if (res.code !== '000000') {
-            message.warning(res.msg);
-            return;
+  handleTable = record => {
+    const { dispatch } = this.props;
+    var data = {
+      ...this.state.pagination,
+      page: 1,
+      ...record
+    };
+    this.setState({
+      pagination: data,
+    });
+    dispatch({
+      type: 'warning/fetchWarningListDetails',
+      payload: data,
+      callback: res => {
+        if (res.code !== '000000') {
+          message.warning(res.msg);
+          return;
+        }
+        if (!res.alarmEntity.length) {
+          message.warning('未查到数据！');
+          this.setState({
+            line: 0,
+            warninGrecord: {},
+          });
+          return;
+        }
+        this.setState(
+          {
+            line: 0,
+            warninGrecord: res.alarmEntity[0],
+          },
+          () => {
+            this.showIndexMap();
           }
-          if (!res.alarmEntity.length) {
-            message.warning('未查到数据！');
-            this.setState({
-              line: 0,
-              warninGrecord: {},
-            });
-            return;
-          }
-          this.setState(
-            {
-              line: 0,
-              warninGrecord: res.alarmEntity[0],
-            },
-            () => {
-              this.showIndexMap();
-            }
-          );
-        },
-      });
+        );
+      },
     });
   };
   handleTableChange = (pagination, filters, sorter) => {
@@ -251,7 +237,7 @@ class CustomizedForm extends PureComponent {
       <Modal
         destroyOnClose //关闭时销毁 Modal 里的子元素
         title="报警详情"
-        width={950}
+        width={1150}
         visible={detailModalVisible}
         maskClosable={false}
         style={{ top: 50 }}
@@ -261,7 +247,7 @@ class CustomizedForm extends PureComponent {
         <Fragment>
           <Row type="flex" gutter={24}>
             <Col span={10}>
-              <Form onSubmit={this.handleTable} layout="inline">
+              {/* <Form onSubmit={this.handleTable} layout="inline">
                 <Row type="flex" justify="space-between">
                   <Col span={18}>
                     <FormItem>
@@ -283,7 +269,8 @@ class CustomizedForm extends PureComponent {
                     </FormItem>
                   </Col>
                 </Row>
-              </Form>
+              </Form> */}
+              <DatePickerTime handleTable={this.handleTable} />
               <Table
                 dataSource={warningListDetails.alarmEntity}
                 columns={this.columns}

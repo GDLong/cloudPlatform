@@ -1,9 +1,11 @@
 import React, { PureComponent, Fragment } from 'react';
 import { Form, Modal, Button, message, Row, Col, DatePicker, Table, Popover } from 'antd';
 import { connect } from 'dva';
+import DatePickerTime from '@/components/DatePickerTime';
 import LushuMap from './LushuMap';
+import moment from 'moment';
 const FormItem = Form.Item;
-const { RangePicker } = DatePicker;
+
 
 @connect(({ obd, loading }) => ({
   obd,
@@ -80,6 +82,8 @@ class CustomizedForm extends PureComponent {
       },
       pathQuery: {}, //单选点击
       line: 0,
+      startTime:"",
+      endTime:""
     };
   }
   componentWillMount() {
@@ -113,39 +117,26 @@ class CustomizedForm extends PureComponent {
       },
     });
   }
-  handleTable = e => {
-    e.preventDefault();
-    const { dispatch, form } = this.props;
-    form.validateFields((err, fieldsValue) => {
-      if (err) return;
-      var rangeValue = fieldsValue['rangeTime'];
-      if (rangeValue !== undefined && rangeValue.length !== 0) {
-        rangeValue = [
-          rangeValue[0].format('YYYY-MM-DD HH:mm:ss'),
-          rangeValue[1].format('YYYY-MM-DD HH:mm:ss'),
-        ];
-      } else {
-        rangeValue = ['', ''];
-      }
-      const values = {
-        ...this.state.pagination,
-        startTime: rangeValue[0],
-        endTime: rangeValue[1],
-        page: 1,
-      };
-      this.setState({
-        pagination: values,
-      });
-      dispatch({
-        type: 'obd/fetchObdSearchList',
-        payload: values,
-        callback: res => {
-          this.setState({
-            line: 0,
-            pathQuery: res.list[0],
-          });
-        },
-      });
+  handleTable = (record) => {
+    const { dispatch } = this.props;
+    const values = {
+      ...this.state.pagination,
+      page: 1,
+      ...record
+    };
+    this.setState({
+      pagination: values,
+    });
+    dispatch({
+      type: 'obd/fetchObdSearchList',
+      payload: values,
+      callback: res => {
+        if (res.code !== "000000") { message.warning(res.msg); return }
+        this.setState({
+          line: 0,
+          pathQuery: res.list[0],
+        });
+      },
     });
   };
   handleTableChange = (page, filters, sorter) => {
@@ -194,7 +185,7 @@ class CustomizedForm extends PureComponent {
       <Modal
         destroyOnClose //关闭时销毁 Modal 里的子元素
         title="查询obd数据"
-        width={900}
+        width={1150}
         visible={detailModalVisible}
         maskClosable={false}
         footer={null}
@@ -203,30 +194,7 @@ class CustomizedForm extends PureComponent {
         <Fragment>
           <Row gutter={24}>
             <Col span={10}>
-              <Form layout="inline" onSubmit={this.handleTable}>
-                <Row type="flex" justify="space-between">
-                  <Col span={18}>
-                    <FormItem>
-                      {form.getFieldDecorator('rangeTime')(
-                        <RangePicker
-                          allowClear
-                          showTime={{ format: 'HH:mm:ss' }}
-                          format="YYYY-MM-DD HH:mm:ss"
-                          style={{ width: '100%' }}
-                        />
-                      )}
-                    </FormItem>
-                  </Col>
-                  <Col span={6}>
-                    <FormItem>
-                      <Button type="primary" htmlType="submit">
-                        查询
-                      </Button>
-                    </FormItem>
-                  </Col>
-                </Row>
-              </Form>
-              <br />
+              <DatePickerTime handleTable={this.handleTable}/>
               <Table
                 dataSource={searchList.list}
                 columns={this.columns}
